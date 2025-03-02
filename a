@@ -1,0 +1,106 @@
+import pygame
+import random
+
+# 初始化pygame
+pygame.init()
+
+# 定义颜色
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLACK = (0, 0, 0)
+
+# 设置游戏窗口
+WINDOW_WIDTH = 800
+WINDOW_HEIGHT = 600
+BLOCK_SIZE = 20
+
+# 创建窗口
+screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+pygame.display.set_caption('贪吃蛇')
+
+class Snake:
+    def __init__(self):
+        self.body = [(WINDOW_WIDTH//2, WINDOW_HEIGHT//2)]
+        self.direction = 'RIGHT'
+        self.grow = False
+
+    def move(self):
+        x, y = self.body[0]
+        if self.direction == 'UP':
+            y -= BLOCK_SIZE
+        elif self.direction == 'DOWN':
+            y += BLOCK_SIZE
+        elif self.direction == 'LEFT':
+            x -= BLOCK_SIZE
+        elif self.direction == 'RIGHT':
+            x += BLOCK_SIZE
+        
+        self.body.insert(0, (x, y))
+        if not self.grow:
+            self.body.pop()
+        self.grow = False
+
+    def draw(self):
+        for segment in self.body:
+            pygame.draw.rect(screen, GREEN, (*segment, BLOCK_SIZE, BLOCK_SIZE))
+
+class Food:
+    def __init__(self):
+        self.position = self.get_random_position()
+
+    def get_random_position(self):
+        x = random.randrange(0, WINDOW_WIDTH, BLOCK_SIZE)
+        y = random.randrange(0, WINDOW_HEIGHT, BLOCK_SIZE)
+        return (x, y)
+
+    def draw(self):
+        pygame.draw.rect(screen, RED, (*self.position, BLOCK_SIZE, BLOCK_SIZE))
+
+def main():
+    clock = pygame.time.Clock()
+    snake = Snake()
+    food = Food()
+    game_over = False
+
+    while not game_over:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game_over = True
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP and snake.direction != 'DOWN':
+                    snake.direction = 'UP'
+                elif event.key == pygame.K_DOWN and snake.direction != 'UP':
+                    snake.direction = 'DOWN'
+                elif event.key == pygame.K_LEFT and snake.direction != 'RIGHT':
+                    snake.direction = 'LEFT'
+                elif event.key == pygame.K_RIGHT and snake.direction != 'LEFT':
+                    snake.direction = 'RIGHT'
+
+        # 移动蛇
+        snake.move()
+
+        # 检查是否吃到食物
+        if snake.body[0] == food.position:
+            snake.grow = True
+            food.position = food.get_random_position()
+
+        # 检查碰撞
+        head = snake.body[0]
+        if (head[0] < 0 or head[0] >= WINDOW_WIDTH or 
+            head[1] < 0 or head[1] >= WINDOW_HEIGHT or 
+            head in snake.body[1:]):
+            game_over = True
+
+        # 绘制
+        screen.fill(BLACK)
+        snake.draw()
+        food.draw()
+        pygame.display.update()
+
+        clock.tick(10)
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
